@@ -46,7 +46,7 @@ namespace NetServNodeEntity
         {
             get
             {
-                return MasterNodeAddress + ":" + MasterPort;
+                return "http://"+ MasterNodeAddress + ":" + MasterPort;
             }
         }
     }

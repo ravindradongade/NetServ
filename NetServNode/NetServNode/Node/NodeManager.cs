@@ -192,7 +192,7 @@ namespace NetServNode.Node
             // nodeInformationMessage.RamUsage=Process.GetCurrentProcess().
             nodeInformationMessage.NodeId = StaticProperties.NodeConfig.NodeId;
             nodeInformationMessage.NodeName = StaticProperties.NodeConfig.NodeName;
-            nodeInformationMessage.NodeAddress = StaticProperties.NodeConfig.NodeAddress + ":" + StaticProperties.NodeConfig.NodePort;
+            nodeInformationMessage.NodeAddress = "http://"+StaticProperties.NodeConfig.NodeAddress + ":" + StaticProperties.NodeConfig.NodePort;
             nodeInformationMessage.Actros = StaticProperties.NodeConfig.Actors.Select(a => new NetServeNodeEntity.Actors.ActorModel() { ActorName = a }).ToList();
             var result = await this._httpWrapper.DoHttpPost<string, NodeInformationMessage>(
                   StaticProperties.NodeConfig.MasterNodeUri + "/" + SEND_HEALTHINFO_ENDPOINT,
