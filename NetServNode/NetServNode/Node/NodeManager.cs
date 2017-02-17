@@ -99,7 +99,7 @@ namespace NetServNode.Node
 
         public async Task<bool> IsMasterReachable()
         {
-            var result = await _httpWrapper.DoHttpGet<string>(StaticProperties.NodeConfig.MasterNodeAddress);
+            var result = await _httpWrapper.DoHttpGet<string>(StaticProperties.NodeConfig.MasterNodeUri+"/"+MASER_PING);
             return result == "OK";
         }
 
