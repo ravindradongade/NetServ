@@ -37,5 +37,10 @@ namespace NetServNode.MasterController
         {
             this._masterTaskManager.ProcessTaskMessage(taskMessage);
         }
+        [HttpGet]
+        public string MasterPing()
+        {
+            return "OK";
+        }
     }
 }

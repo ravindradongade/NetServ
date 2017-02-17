@@ -40,7 +40,10 @@ namespace NetServNode.Node
 
         private const string MASER_PING = "MasterPing";
 
-
+        public NodeManager()
+        {
+            _httpWrapper = new HttpWrapper();
+        }
         public void StartNodeManager()
         {
             _Intialize();
@@ -160,7 +163,7 @@ namespace NetServNode.Node
             SendNodeInfoToMasterTimer.Elapsed += _SendHealthInfo_Elapsed;
             SendNodeInfoToMasterTimer.Start();
             CpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
-            this._httpWrapper = new HttpWrapper();
+            //this._httpWrapper = new HttpWrapper();
             _nodeTaskManager = new NodeTaskManager();
         }
         private void _SendHealthInfo_Elapsed(object sender, ElapsedEventArgs e)
