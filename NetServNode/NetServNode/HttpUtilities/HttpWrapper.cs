@@ -33,7 +33,14 @@ namespace NetServNode.HttpUtilities
                     if (result.IsSuccessStatusCode)
                     {
                         var content = await result.Content.ReadAsAsync<string>();
-                        deserializedEntity = JsonConvert.DeserializeObject<T>(content);
+                        if (typeof(T) == typeof(string)|| typeof(T) == typeof(int))
+                        {
+                            deserializedEntity = (T)Convert.ChangeType(content, typeof(T));
+                        }
+                        else
+                        {
+                            deserializedEntity = JsonConvert.DeserializeObject<T>(content);
+                        }
                         return deserializedEntity;
                     }
                    

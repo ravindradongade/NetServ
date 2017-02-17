@@ -159,7 +159,8 @@ namespace NetServNode.Node
         }
         private void _Intialize()
         {
-            SendNodeInfoToMasterTimer = new Timer(this.SEND_NODE_UPDATE_INTERVAL);
+            _SendHealthInfoToMaster();
+            SendNodeInfoToMasterTimer = new Timer( this.SEND_NODE_UPDATE_INTERVAL*1000);
             SendNodeInfoToMasterTimer.Elapsed += _SendHealthInfo_Elapsed;
             SendNodeInfoToMasterTimer.Start();
             CpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");

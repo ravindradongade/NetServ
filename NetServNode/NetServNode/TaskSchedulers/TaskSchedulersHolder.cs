@@ -9,5 +9,9 @@ namespace NetServNode.TaskSchedulers
     public class TaskSchedulersHolder
     {
         public static LimitedConcurrencyLevelTaskScheduler SchedulerToSendMissedTaskToNode { get; set; }
+        static TaskSchedulersHolder()
+        {
+            SchedulerToSendMissedTaskToNode = new LimitedConcurrencyLevelTaskScheduler(3);
+        }
     }
 }
