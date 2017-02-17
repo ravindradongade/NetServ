@@ -30,15 +30,15 @@ namespace NetServNode.Node
         public static PerformanceCounter CpuCounter;
         private NodeTaskManager _nodeTaskManager;
 
-        private const string SEND_HEALTHINFO_ENDPOINT = "IamNode";
+        private const string SEND_HEALTHINFO_ENDPOINT = "Master/IamNode";
 
-        private const string MASTE_DEAD_BROADCAST_ENDPOINT = "MasterDead";
+        private const string MASTE_DEAD_BROADCAST_ENDPOINT = "Node/MasterDead";
 
-        private const string GET_INFO_FOR_MASTER_SELECTION = "GetInfoForMasterSelection";
+        private const string GET_INFO_FOR_MASTER_SELECTION = "Node/GetInfoForMasterSelection";
 
-        private const string REGISTER_NEW_MASTER = "RegisterNewMaster";
+        private const string REGISTER_NEW_MASTER = "Node/RegisterNewMaster";
 
-        private const string MASER_PING = "MasterPing";
+        private const string MASER_PING = "Master/MasterPing";
 
         public NodeManager()
         {

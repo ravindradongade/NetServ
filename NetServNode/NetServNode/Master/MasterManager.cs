@@ -30,9 +30,9 @@ namespace NetServNode.Master
         private const int RETRY_COUNT = 3;
 
 
-        private const string NODE_HEALTH_CHECK_ENDPOINT = "GetNodeHealthInfoForMaster";
+        private const string NODE_HEALTH_CHECK_ENDPOINT = "Node/GetNodeHealthInfoForMaster";
 
-        private const string NODE_DECLAREDDEAD_ENDPOINT = "DeclareDead";
+        private const string NODE_DECLAREDDEAD_ENDPOINT = "Node/DeclareDead";
         private readonly HttpWrapper _httpWrapper;
 
         private BlockingCollection<NodeInfo> _nodesWithRetry1;

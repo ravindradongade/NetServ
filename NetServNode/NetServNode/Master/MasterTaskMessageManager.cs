@@ -16,7 +16,7 @@ namespace NetServNode.Master
 
     public class MasterTaskMessageManager
     {
-        private const string SEND_MESSAGE_TASK_ENDPOINT = "SendTaskMessage";
+        private const string SEND_MESSAGE_TASK_ENDPOINT = "Node/SendTaskMessage";
         private const int RETRY_COUNT = 3;
 
         private HttpWrapper _httpWrapper;
