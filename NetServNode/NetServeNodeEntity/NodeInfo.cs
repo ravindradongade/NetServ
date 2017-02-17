@@ -14,7 +14,7 @@ namespace NetServNodeEntity
         public NodeTypes NodeType { get; set; }
         public string NodeAddress { get; set; }
         public int NodePort { get; set; }
-        public int NumberOfRunningThread { get; set; }
+        public int NumberOfActorsRunning { get; set; }
         public float CpuUsage { get; set; }
 
         public DateTime LastCheckinTime { get; set; }

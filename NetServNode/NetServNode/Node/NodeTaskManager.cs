@@ -69,65 +69,47 @@ namespace NetServNode.Node
             }
         }
 
-        private void EnQueueTask(TaskMessage taskMessage)
-        {
-            lock (StaticProperties.LocableObjectForTaskQueue)
-            {
-                try
-                {
-                    StaticProperties.TaskMessagesToBeProcessed.Add(taskMessage);
-                }
-                catch
-                {
+        //private void EnQueueTask(TaskMessage taskMessage)
+        //{
+        //    lock (StaticProperties.LocableObjectForTaskQueue)
+        //    {
+        //        try
+        //        {
+        //            StaticProperties.TaskMessagesToBeProcessed.Add(taskMessage);
+        //        }
+        //        catch
+        //        {
 
-                }
-            }
-        }
-        private TaskMessage DequeueTaskWithMessageId()
-        {
-            lock (StaticProperties.LocableObjectForTaskQueue)
-            {
-                try
-                {
-                    //Check if message actor id and running actor id are same, then when till running actor completes its task
-                    int totalMessages = StaticProperties.TaskMessagesToBeProcessed.Count;
-                    for (int index = 0; index < totalMessages; index++)
-                    {
-                        var message = StaticProperties.TaskMessagesToBeProcessed[index];
-                        if (!StaticProperties.RunningActors.Any(rc => rc.ActorId == message.ActorId))
-                        {
-                            StaticProperties.TaskMessagesToBeProcessed.Remove(message);
-                            return message;
-                        }
-                    }
-                    return null;
-                }
-                catch
-                {
-                    return null;
-                }
-            }
-        }
+        //        }
+        //    }
+        //}
+        //private TaskMessage DequeueTaskWithMessageId()
+        //{
+        //    lock (StaticProperties.LocableObjectForTaskQueue)
+        //    {
+        //        try
+        //        {
+        //            //Check if message actor id and running actor id are same, then when till running actor completes its task
+        //            int totalMessages = StaticProperties.TaskMessagesToBeProcessed.Count;
+        //            for (int index = 0; index < totalMessages; index++)
+        //            {
+        //                var message = StaticProperties.TaskMessagesToBeProcessed[index];
+        //                if (!StaticProperties.RunningActors.Any(rc => rc.ActorId == message.ActorId))
+        //                {
+        //                    StaticProperties.TaskMessagesToBeProcessed.Remove(message);
+        //                    return message;
+        //                }
+        //            }
+        //            return null;
+        //        }
+        //        catch
+        //        {
+        //            return null;
+        //        }
+        //    }
+        //}
 
-        private TaskMessage DequeueTask()
-        {
-            lock (StaticProperties.LocableObjectForTaskQueue)
-            {
-                try
-                {
-                    if (StaticProperties.TaskMessagesToBeProcessed.Count > 0)
-                    {
-                        return StaticProperties.TaskMessagesToBeProcessed[0];
-                    }
-                    return null;
-                }
-                catch (Exception)
-                {
-
-                    return null;
-                }
-            }
-        }
+       
 
         private void ExecuteTask(TaskMessage message)
         {

@@ -3,16 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using Owin;
 namespace NetServNode.Owin
 {
     using System.Web.Http;
 
-    using global::Owin;
+
+   
 
     internal class Startup
     {
-        internal void Configure(IAppBuilder app)
+        public void Configuration(IAppBuilder app)
         {
             // Configure Web API for self-host. 
             HttpConfiguration config = new HttpConfiguration();

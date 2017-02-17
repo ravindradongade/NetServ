@@ -72,18 +72,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="HttpUtilities\HttpPostWrapper.cs" />
     <Compile Include="HttpUtilities\HttpWrapper.cs" />
     <Compile Include="MasterController\MasterController.cs" />
     <Compile Include="Master\MasterManager.cs" />
     <Compile Include="Master\MasterTaskMessageManager.cs" />
-    <Compile Include="Master\TaskDistributer.cs" />
     <Compile Include="NetServManager.cs" />
+    <Compile Include="NodeController.cs" />
+    <Compile Include="Node\NodeApiProcessor.cs" />
     <Compile Include="Node\NodeManager.cs" />
     <Compile Include="Node\NodeTaskManager.cs" />
     <Compile Include="Owin\Startup.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TaskSchedulers\LimitedConcurrencyLevelTaskScheduler.cs" />
+    <Compile Include="TaskSchedulers\TaskSchedulersHolder.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\NetServeNodeEntity\NetServeNodeEntity.csproj">

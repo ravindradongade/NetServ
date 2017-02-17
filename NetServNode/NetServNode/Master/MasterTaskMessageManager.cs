@@ -24,31 +24,39 @@ namespace NetServNode.Master
         {
             this._httpWrapper=new HttpWrapper();
         }
-        public async void ProcessTaskMessage(TaskMessage message)
+        public async Task<bool> ProcessTaskMessage(TaskMessage message)
         {
-            int count = 0;
-            RETRY:
-            var nodes = _GetNode(message);
-            if (nodes == null)
+            try
             {
-                count++;
-                if (count< 2)
+                int count = 0;
+                RETRY:
+                var nodes = _GetNode(message);
+                if (nodes == null)
                 {
-                    goto RETRY;
+                    count++;
+                    if (count < 2)
+                    {
+                        // Try 3 times
+                        goto RETRY;
+                    }
+                    else
+                    {
+                        lock (StaticProperties.TaskMessages)
+                        {
+                            StaticProperties.TaskMessages.Add(message);
+                        }
+                        return true;
+                    }
+                   
                 }
-                else
-                {
-                    StaticProperties.TaskMessages.Enqueue(message);
-                }
-            }
-            bool success = false;
-            var nodeWithSameMessageId = nodes.FirstOrDefault(n => n.RegistedActors.Any(ac => ac.MessageIds != null && ac.MessageIds.Contains(message.ActorId)));
-            if (nodeWithSameMessageId != null)
-            {
-                success = await _SendTaskToNode(message, nodeWithSameMessageId.NodeAddress);
-            }
-            else
-            {
+                bool success = false;
+                //var nodeWithSameMessageId = nodes.FirstOrDefault(n => n.RegistedActors.Any(ac => ac.ActorName ==message.Actor));
+                //if (nodeWithSameMessageId != null)
+                //{
+                //    success = await _SendTaskToNode(message, nodeWithSameMessageId.NodeAddress);
+                //}
+                //else
+                //{
                 foreach (var nodeInfo in nodes)
                 {
                     var result = await this._httpWrapper.DoHttpPost<string, TaskMessage>(
@@ -61,12 +69,27 @@ namespace NetServNode.Master
                     }
 
                 }
+                //}
+                if (!success)
+                {
+                    lock (StaticProperties.TaskMessages)
+                    {
+                        StaticProperties.TaskMessages.Add(message);
+                    }
+                }
+                return true;
             }
-            if (!success)
+            catch (Exception)
             {
-                StaticProperties.TaskMessages.Enqueue(message);
-            }
 
+                return false;
+            }
+            
+
+        }
+        public async Task<bool> SendTaskToNode(TaskMessage taskMessage, string nodeAddress)
+        {
+            return await _SendTaskToNode(taskMessage, nodeAddress);
         }
         private async Task<bool> _SendTaskToNode(TaskMessage taskMessage,string nodeAddress)
         {
@@ -75,19 +98,22 @@ namespace NetServNode.Master
                                 taskMessage);
             return result != null;
         }
+
         private IEnumerable<NodeInfo> _GetNode(TaskMessage taskMessage)
         {
             try
             {
                 int count = 0;
+                //Get actor. Try 3 times just to get latest actors
                 RETRY:
                 var nodes = StaticProperties.HostedNodes.Where(x => x.Value.RegistedActors.Any(an=>an.ActorName==taskMessage.Actor));
                 count++;
                 if (count < 2) goto RETRY;
                 else if (nodes.Count() != 0)
                 {
+                    //Sort nodes with least number of actors running and least cpu usage
                     var nodesWithDescendingThreads =
-                        nodes.OrderByDescending(x => x.Value.NumberOfRunningThread).Select(x => x.Value);
+                        nodes.OrderByDescending(x => x.Value.NumberOfActorsRunning).Select(x => x.Value);
                     var finalList = nodesWithDescendingThreads.OrderByDescending(x => x.CpuUsage);
                     return finalList;
 

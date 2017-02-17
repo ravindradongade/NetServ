@@ -36,20 +36,12 @@ namespace NetServNode.HttpUtilities
                         deserializedEntity = JsonConvert.DeserializeObject<T>(content);
                         return deserializedEntity;
                     }
-                    else if (result.StatusCode == HttpStatusCode.NotFound)
-                    {
-                        throw new EndPointNotFoundException();
-                    }
-                    else
-                    {
+                   
                         return deserializedEntity;
-                    }
+                  
                 }
             }
-            catch (TimeoutException ex)
-            {
-                throw new EndPointNotFoundException();
-            }
+           
             catch (Exception ex)
             {
                 return deserializedEntity;

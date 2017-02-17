@@ -9,6 +9,7 @@ namespace NetServNode
 
     using NetServNode.Master;
     using NetServNode.Owin;
+    using Node;
 
     public class NetServManager
 
@@ -20,33 +21,34 @@ namespace NetServNode
 
         private const int DefaultCpuUsage = 75;
         private readonly MasterManager _masterManager;
-
+        private readonly NodeManager _nodeManager;
 
 
         public NetServManager()
         {
-            this._masterManager=new MasterManager();
+            this._masterManager = new MasterManager();
+            this._nodeManager = new NodeManager();
         }
-        private void _ValidateConfiguration()
+        private void _ValidateConfiguration(NodeConfiguration nodeConfiguration)
         {
-            if (string.IsNullOrEmpty(StaticProperties.NodeConfig.NodeName))
+            if (string.IsNullOrEmpty(nodeConfiguration.NodeName))
             {
-                StaticProperties.NodeConfig.NodeName = _GenerateNodeName();
+                nodeConfiguration.NodeName = _GenerateNodeName();
             }
-            if (StaticProperties.NodeConfig.NodePort == 0)
+            if (nodeConfiguration.NodePort == 0)
             {
-                StaticProperties.NodeConfig.NodePort = DefaultNodePort;
+                nodeConfiguration.NodePort = DefaultNodePort;
             }
-            if (StaticProperties.NodeConfig.MaxThreads == 0)
+            if (nodeConfiguration.MaxThreads == 0)
             {
-                StaticProperties.NodeConfig.MaxThreads = DefaultMaxThreads;
+                nodeConfiguration.MaxThreads = DefaultMaxThreads;
             }
-            if (StaticProperties.NodeConfig.MaxCpuUsage == 0)
+            if (nodeConfiguration.MaxCpuUsage == 0)
             {
-                StaticProperties.NodeConfig.MaxCpuUsage = DefaultCpuUsage;
+                nodeConfiguration.MaxCpuUsage = DefaultCpuUsage;
             }
 
-            if (StaticProperties.NodeConfig.IsMaster && _IsThisDuplicateMaster())
+            if (nodeConfiguration.IsMaster && _IsThisDuplicateMaster())
             {
                 throw new System.Exception("Master Node already hosted");
             }
@@ -60,33 +62,37 @@ namespace NetServNode
             return StaticProperties.HostedNodes.Any(node => node.Value.NodeType == NetServNodeEntity.Enums.NodeTypes.Master);
         }
 
-        private void _StartNodeManager()
-        {
-            
-        }
-        public void StartNode()
+
+
+        public void StartNode(NodeConfiguration nodeConfiguration)
         {
             try
             {
-                this._ValidateConfiguration();
+                this._ValidateConfiguration(nodeConfiguration);
+
+                StaticProperties.NodeConfig = nodeConfiguration;
+
                 WebApp.Start<Startup>(url: "http://localhost:" + StaticProperties.NodeConfig.NodePort);
-                StaticProperties.NodeConfig.NodeId = Guid.NewGuid().ToString();
                 if (StaticProperties.NodeConfig.IsMaster)
                 {
                     this._masterManager.StartMasterManager();
                 }
                 else
                 {
-                    this._StartNodeManager();
+                    _nodeManager.StartNodeManager();
                 }
-               
+
             }
-            catch (Exception)
+            catch (Exception ex)
             {
 
                 throw;
             }
 
+
+        }
+        public void StopNode()
+        {
 
         }
 

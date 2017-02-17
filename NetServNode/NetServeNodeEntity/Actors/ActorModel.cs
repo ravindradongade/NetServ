@@ -9,6 +9,6 @@ namespace NetServeNodeEntity.Actors
     public class ActorModel
     {
         public string ActorName { get; set; }
-        public List<string> MessageIds { get; set; }
+        
     }
 }

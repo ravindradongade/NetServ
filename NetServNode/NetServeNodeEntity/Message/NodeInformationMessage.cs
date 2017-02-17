@@ -1,4 +1,6 @@
-﻿using NetServNodeEntity.Enums;
+﻿using NetServeNodeEntity.Actors;
+using NetServNodeEntity.Enums;
+using System.Collections.Generic;
 
 namespace NetServNodeEntity.Message
 {
@@ -14,7 +16,7 @@ namespace NetServNodeEntity.Message
 
         public int RamUsage { get; set; }
 
-        public string[] Actros { get; set; }
+        public List<ActorModel> Actros { get; set; }
         
     }
 }

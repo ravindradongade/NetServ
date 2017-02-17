@@ -9,6 +9,8 @@ namespace NetServNodeEntity
 {
     using System.Threading;
 
+    using NetServeNodeEntity.Message;
+
     using NetServEntity;
 
     public static class StaticProperties
@@ -17,18 +19,27 @@ namespace NetServNodeEntity
         public static NodeConfiguration NodeConfig;
         public static BlockingCollection<string> NodeHealthInfoMessagesCollection;
         public static BlockingCollection<NodeInfo> NodesToBeDeclaredDead;
-        public static ConcurrentQueue<TaskMessage> TaskMessages;
-        public static object LocableObjectForTaskQueue;
+        public static List<TaskMessage> TaskMessages;
+       
+        #region NodeManager
+        private static Timer NodeInfoSendToMasterTimer;
+        #endregion
 
         #region Task Processing
         public static List<TaskMessage> RunningActors;
-        public static List<TaskMessage> TaskMessagesToBeProcessed;
-        public static BlockingCollection<int> TaskPool;
+       // public static List<TaskMessage> TaskMessagesToBeProcessed;
         public static BlockingCollection<TaskMessage> TaskMessageContainer;
         public static ConcurrentDictionary<string, object> ActrorsDictionary;
 
         #endregion
+        #region Master Selection
 
+        public static List<NodeDeclaredDeadMessage> MasterDeadMessages;
+        public static NodeInfo NextMasterSelectionManager;
+
+        public static bool MasterSelectionProcessStarted;
+        public static BlockingCollection<NodeDeclaredDeadMessage> MasterDeadMessageBlockingCollection;
+        #endregion
 
 
         static StaticProperties()
@@ -37,6 +48,16 @@ namespace NetServNodeEntity
             NodeHealthInfoMessagesCollection = new BlockingCollection<string>();
             NodesToBeDeclaredDead = new BlockingCollection<NodeInfo>();
             ActrorsDictionary = new ConcurrentDictionary<string, object>();
+           
+
+            RunningActors = new List<TaskMessage>();
+            //TaskMessagesToBeProcessed = new List<TaskMessage>();
+            TaskMessageContainer = new BlockingCollection<TaskMessage>();
+            ActrorsDictionary = new ConcurrentDictionary<string, object>();
+
+            MasterDeadMessages = new List<NodeDeclaredDeadMessage>();
+            MasterDeadMessageBlockingCollection = new BlockingCollection<NodeDeclaredDeadMessage>();
+
         }
     }
 }
