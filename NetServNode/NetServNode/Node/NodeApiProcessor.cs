@@ -27,7 +27,7 @@ namespace NetServNode.Node
         {
             try
             {
-                var nodeInfo = new NodeInfo() { NodeAddress = StaticProperties.NodeConfig.NodeAddress, CpuUsage = NodeManager.CpuCounter.NextValue(), NumberOfActorsRunning = StaticProperties.RunningActors.Count, NodeId = StaticProperties.NodeConfig.NodeId };
+                var nodeInfo = new NodeInfo() { NodeAddress = StaticProperties.NodeConfig.NodeAddress+":"+StaticProperties.NodeConfig.NodePort, CpuUsage = NodeManager.CpuCounter.NextValue(), NumberOfActorsRunning = StaticProperties.RunningActors.Count, NodeId = StaticProperties.NodeConfig.NodeId };
                 return nodeInfo;
             }
             catch(Exception ex)

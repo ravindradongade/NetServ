@@ -50,7 +50,15 @@ namespace NetServNode
 
             if (nodeConfiguration.IsMaster && _IsThisDuplicateMaster())
             {
-                throw new System.Exception("Master Node already hosted");
+                throw new System.ArgumentNullException("Master Node already hosted");
+            }
+            if (!nodeConfiguration.IsMaster)
+            {
+                if (nodeConfiguration.NodePort == 0)
+                    throw new System.ArgumentNullException("Master Node Port is empty!!!");
+                if (string.IsNullOrEmpty(nodeConfiguration.MasterNodeAddress))
+                    throw new System.ArgumentNullException("Master Node Address is empty!!!");
+
             }
         }
         private string _GenerateNodeName()
@@ -61,9 +69,6 @@ namespace NetServNode
         {
             return StaticProperties.HostedNodes.Any(node => node.Value.NodeType == NetServNodeEntity.Enums.NodeTypes.Master);
         }
-
-
-
         public void StartNode(NodeConfiguration nodeConfiguration)
         {
             try
@@ -71,7 +76,13 @@ namespace NetServNode
                 this._ValidateConfiguration(nodeConfiguration);
 
                 StaticProperties.NodeConfig = nodeConfiguration;
-
+                if (!StaticProperties.NodeConfig.IsMaster)
+                {
+                    if (!_nodeManager.IsMasterReachable().Result)
+                    {
+                        throw new OperationCanceledException("Master is not reachable");
+                    }
+                }
                 WebApp.Start<Startup>(url: "http://localhost:" + StaticProperties.NodeConfig.NodePort);
                 if (StaticProperties.NodeConfig.IsMaster)
                 {
@@ -88,8 +99,6 @@ namespace NetServNode
 
                 throw;
             }
-
-
         }
         public void StopNode()
         {

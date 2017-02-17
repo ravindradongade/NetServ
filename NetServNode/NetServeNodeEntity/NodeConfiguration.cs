@@ -15,7 +15,7 @@ namespace NetServNodeEntity
         {
             NodeName = nodeName;
             NodeId = Guid.NewGuid().ToString();
-            NodeAddress = nodeAddress+":"+nodePort;
+            NodeAddress = nodeAddress;
             NodePort = nodePort;
             IsMaster = isMaster;
             StorageType = storageType;
@@ -32,7 +32,7 @@ namespace NetServNodeEntity
         public string NodeName { get;  set; }
         public string NodeAddress { get;  set; }
         public int NodePort { get;  set; }
-        public bool IsMaster { get; set; }
+          public bool IsMaster { get; set; }
         public StorageType StorageType { get;  set; }
         public string ConnectionString { get;  set; }
         public int MaxThreads { get;  set; }
@@ -41,5 +41,13 @@ namespace NetServNodeEntity
         public NamingServiceConfiguration NamingService { get; set; }
         public string[] Actors { get; set; }
         public string MasterNodeAddress { get; set; }
+        public int MasterPort { get; set; }
+        public string MasterNodeUri
+        {
+            get
+            {
+                return MasterNodeAddress + ":" + MasterPort;
+            }
+        }
     }
 }

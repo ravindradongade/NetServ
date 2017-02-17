@@ -38,6 +38,8 @@ namespace NetServNode.Node
 
         private const string REGISTER_NEW_MASTER = "RegisterNewMaster";
 
+        private const string MASER_PING = "MasterPing";
+
 
         public void StartNodeManager()
         {
@@ -92,6 +94,11 @@ namespace NetServNode.Node
 
         }
 
+        public async Task<bool> IsMasterReachable()
+        {
+            var result = await _httpWrapper.DoHttpGet<string>(StaticProperties.NodeConfig.MasterNodeAddress);
+            return result == "OK";
+        }
 
         private async void _StartMasterSelection()
         {
@@ -102,7 +109,7 @@ namespace NetServNode.Node
                 foreach (var hostedNode in StaticProperties.HostedNodes)
                 {
                     var nodeInfo = await this._httpWrapper.DoHttpGet<NodeInfo>(
-                          hostedNode + "/" + GET_INFO_FOR_MASTER_SELECTION);
+                          hostedNode.Value.NodeAddress + "/" + GET_INFO_FOR_MASTER_SELECTION);
                     if (nodeInfo != null)
                     {
                         nodeInfos.Add(nodeInfo);
@@ -139,7 +146,7 @@ namespace NetServNode.Node
             foreach (var hostedNode in StaticProperties.HostedNodes)
             {
                 this._httpWrapper.DoHttpPostWithNoReturn<NodeInfo>(
-                       hostedNode + "/" + GET_INFO_FOR_MASTER_SELECTION, winner);
+                       hostedNode.Value.NodeAddress + "/" + GET_INFO_FOR_MASTER_SELECTION, winner);
 
             }
             StaticProperties.NodeConfig.IsMaster = true;
@@ -182,10 +189,10 @@ namespace NetServNode.Node
             // nodeInformationMessage.RamUsage=Process.GetCurrentProcess().
             nodeInformationMessage.NodeId = StaticProperties.NodeConfig.NodeId;
             nodeInformationMessage.NodeName = StaticProperties.NodeConfig.NodeName;
-            nodeInformationMessage.NodeAddress = StaticProperties.NodeConfig.NodeAddress;
+            nodeInformationMessage.NodeAddress = StaticProperties.NodeConfig.NodeAddress + ":" + StaticProperties.NodeConfig.NodePort;
             nodeInformationMessage.Actros = StaticProperties.NodeConfig.Actors.Select(a => new NetServeNodeEntity.Actors.ActorModel() { ActorName = a }).ToList();
             var result = await this._httpWrapper.DoHttpPost<string, NodeInformationMessage>(
-                  StaticProperties.NodeConfig.MasterNodeAddress + "/" + SEND_HEALTHINFO_ENDPOINT,
+                  StaticProperties.NodeConfig.MasterNodeUri + "/" + SEND_HEALTHINFO_ENDPOINT,
                   nodeInformationMessage);
             if (result == "OK")
             {
@@ -208,7 +215,7 @@ namespace NetServNode.Node
             foreach (var hostedNode in StaticProperties.HostedNodes)
             {
                 this._httpWrapper.DoHttpPostWithNoReturn(
-                    hostedNode + "/" + MASTE_DEAD_BROADCAST_ENDPOINT,
+                    hostedNode.Value.NodeAddress + "/" + MASTE_DEAD_BROADCAST_ENDPOINT,
                     StaticProperties.NodeConfig.NodeName);
             }
         }
