@@ -83,7 +83,7 @@ namespace NetServNode
                         throw new OperationCanceledException("Master is not reachable");
                     }
                 }
-                WebApp.Start<Startup>(url: "http://localhost:" + StaticProperties.NodeConfig.NodePort);
+                WebApp.Start<Startup>(url: "http://+:" + StaticProperties.NodeConfig.NodePort);
                 if (StaticProperties.NodeConfig.IsMaster)
                 {
                     this._masterManager.StartMasterManager();
