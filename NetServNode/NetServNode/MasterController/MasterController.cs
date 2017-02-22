@@ -15,6 +15,7 @@ namespace NetServNode.MasterController
     using NetServNodeEntity;
     using NetServNodeEntity.Message;
 
+    [RoutePrefix("master")]
     public class MasterController : ApiController
     {
         private MasterManager _masterManager;
@@ -25,19 +26,23 @@ namespace NetServNode.MasterController
             this._masterManager = new MasterManager();
             this._masterTaskManager = new MasterTaskMessageManager();
         }
+
         [HttpPost]
-        public Task<string> IamNode([FromBody] NodeInformationMessage nodeInformationMessage)
+        [Route("IamNode")]
+        public Task<string> IamNode([FromBody]NodeInformationMessage nodeInformationMessage)
         {
             this._masterManager.ProcessNodeHealthMessage(nodeInformationMessage);
             return Task.FromResult("OK");
         }
 
         [HttpPost]
+        [Route("PassTaskMessageAsync")]
         public void PassTaskMessageAsync([FromBody] TaskMessage taskMessage)
         {
             this._masterTaskManager.ProcessTaskMessage(taskMessage);
         }
         [HttpGet]
+
         public string MasterPing()
         {
             return "OK";

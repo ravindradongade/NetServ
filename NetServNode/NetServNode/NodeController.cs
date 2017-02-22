@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace NetServNode
 {
@@ -12,6 +8,7 @@ namespace NetServNode
     using Node;
     using System.Web.Http;
 
+    [RoutePrefix("route")]
     public class NodeController : ApiController
     {
         private NodeApiProcessor _nodeApiProcessor;
@@ -20,6 +17,7 @@ namespace NetServNode
             _nodeApiProcessor = new NodeApiProcessor();
         }
         [HttpPost]
+        [Route("MasterDead")]
         public async Task<bool> MasterDead([FromBody] NodeDeclaredDeadMessage message)
         {
             StaticProperties.MasterDeadMessageBlockingCollection.Add(message);
@@ -27,12 +25,14 @@ namespace NetServNode
 
         }
         [HttpPost]
+        [Route("RegisterMasterNode")]
         public void RegisterMasterNode([FromBody]NodeInfo master)
         {
             _nodeApiProcessor.RegisterNewMaster(master);
         }
 
         [HttpGet]
+        [Route("GetInfoForMasterSelection")]
         public async Task<NodeInfo> GetInfoForMasterSelection()
         {
             var nodeInfo = _nodeApiProcessor.GetNodeInfoForMasterSelection();
@@ -40,12 +40,14 @@ namespace NetServNode
         }
 
         [HttpPost]
+        [Route("IamNode")]
         public  void IamNode([FromBody] NodeInfo nodeInfo)
         {
             _nodeApiProcessor.RegisterNode(nodeInfo);
         }
 
         [HttpPost]
+        [Route("SendTaskMessage")]
         public async Task<string> SendTaskMessage([FromBody] TaskMessage taskMessage)
         {
             StaticProperties.TaskMessageContainer.Add(taskMessage);
