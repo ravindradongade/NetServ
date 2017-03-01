@@ -1,23 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace NetServNode.Node
 {
     using System.Diagnostics;
     using System.Timers;
-
-    using NetServeNodeEntity.Message;
-
-    using NetServEntity;
-
-    using NetServNode.HttpUtilities;
-
     using NetServNodeEntity;
     using NetServNodeEntity.Message;
-
+    using NetServData;
+    using NetServHttpWrapper;
 
     internal class NodeManager
     {
@@ -39,10 +32,12 @@ namespace NetServNode.Node
         private const string REGISTER_NEW_MASTER = "Node/RegisterNewMaster";
 
         private const string MASER_PING = "Master/MasterPing";
+        private IDataManager _dataManager;
 
         public NodeManager()
         {
             _httpWrapper = new HttpWrapper();
+            _dataManager = DataFactory.GetDataManager(StaticProperties.NodeConfig.StorageType, StaticProperties.NodeConfig.ConnectionString);
         }
         public void StartNodeManager()
         {
@@ -97,6 +92,19 @@ namespace NetServNode.Node
 
         }
 
+        public  Tuple<string,int> GetMasterFromStorage()
+        {
+          var master=   _dataManager.GetLiveMasterDetails();
+            if(master!=null)
+            {
+                var tuple = new Tuple<string, int>(master.Address, master.Port);
+                return tuple;
+            }
+            else
+            {
+                return null;
+            }
+        }
         public async Task<bool> IsMasterReachable()
         {
             var result = await _httpWrapper.DoHttpGet<string>(StaticProperties.NodeConfig.MasterNodeUri+"/"+MASER_PING);
@@ -109,15 +117,17 @@ namespace NetServNode.Node
             {
                 var myCpuUsage = CpuCounter.NextValue();
                 List<NodeInfo> nodeInfos = new List<NodeInfo>();
-                foreach (var hostedNode in StaticProperties.HostedNodes)
+                var hostedNodes = StaticProperties.HostedNodes.Values;
+                foreach (var hostedNode in hostedNodes)
                 {
                     var nodeInfo = await this._httpWrapper.DoHttpGet<NodeInfo>(
-                          hostedNode.Value.NodeAddress + "/" + GET_INFO_FOR_MASTER_SELECTION);
+                          hostedNode.NodeAddress + "/" + GET_INFO_FOR_MASTER_SELECTION);
                     if (nodeInfo != null)
                     {
                         nodeInfos.Add(nodeInfo);
                     }
                 }
+                hostedNodes = null;
                 var nodeCanBeMaster = nodeInfos.OrderByDescending(n => n.CpuUsage).OrderByDescending(nd => nd.NumberOfActorsRunning).FirstOrDefault();
                 NodeInfo winner = null;
                 if (nodeCanBeMaster != null)
@@ -146,16 +156,17 @@ namespace NetServNode.Node
         }
         private void _BroadCastMasterSelected(NodeInfo winner)
         {
-            foreach (var hostedNode in StaticProperties.HostedNodes)
+            var hostedNodes = StaticProperties.HostedNodes.Values;
+            foreach (var hostedNode in hostedNodes)
             {
                 this._httpWrapper.DoHttpPostWithNoReturn<NodeInfo>(
-                       hostedNode.Value.NodeAddress + "/" + GET_INFO_FOR_MASTER_SELECTION, winner);
+                       hostedNode.NodeAddress + "/" + GET_INFO_FOR_MASTER_SELECTION, winner);
 
             }
             StaticProperties.NodeConfig.IsMaster = true;
             StaticProperties.MasterSelectionProcessStarted = false;
             IS_SENDNODEHEALTH_IN_PROGRESS = false;
-
+            hostedNodes = null;
         }
         private void _Intialize()
         {
@@ -166,6 +177,7 @@ namespace NetServNode.Node
             CpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
             //this._httpWrapper = new HttpWrapper();
             _nodeTaskManager = new NodeTaskManager();
+            
         }
         private void _SendHealthInfo_Elapsed(object sender, ElapsedEventArgs e)
         {
@@ -216,10 +228,11 @@ namespace NetServNode.Node
         }
         private void _BroadCastMasterDead()
         {
-            foreach (var hostedNode in StaticProperties.HostedNodes)
+            var hostedNodes = StaticProperties.HostedNodes.Values;
+            foreach (var hostedNode in hostedNodes)
             {
                 this._httpWrapper.DoHttpPostWithNoReturn(
-                    hostedNode.Value.NodeAddress + "/" + MASTE_DEAD_BROADCAST_ENDPOINT,
+                    hostedNode.NodeAddress + "/" + MASTE_DEAD_BROADCAST_ENDPOINT,
                     StaticProperties.NodeConfig.NodeName);
             }
         }

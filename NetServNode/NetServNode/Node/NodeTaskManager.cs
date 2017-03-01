@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace NetServNode.Node
 {
     using NetServEntity;
-    using NetServNode.HttpUtilities;
+    using NetServHttpWrapper;
     using NetServNodeEntity;
     using TaskSchedulers;
 

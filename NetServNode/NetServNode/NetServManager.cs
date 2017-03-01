@@ -21,13 +21,13 @@ namespace NetServNode
 
         private const int DefaultCpuUsage = 75;
         private readonly MasterManager _masterManager;
-        private readonly NodeManager _nodeManager;
+        private NodeManager _nodeManager;
 
 
         public NetServManager()
         {
             this._masterManager = new MasterManager();
-            this._nodeManager = new NodeManager();
+
         }
         private void _ValidateConfiguration(NodeConfiguration nodeConfiguration)
         {
@@ -78,6 +78,17 @@ namespace NetServNode
                 StaticProperties.NodeConfig = nodeConfiguration;
                 if (!StaticProperties.NodeConfig.IsMaster)
                 {
+                    this._nodeManager = new NodeManager();
+                    var master = _nodeManager.GetMasterFromStorage();
+                    if (master == null)
+                    {
+                        throw new OperationCanceledException("No master running");
+                    }
+                    else
+                    {
+                        StaticProperties.NodeConfig.MasterNodeAddress = master.Item1;
+                        StaticProperties.NodeConfig.MasterPort = master.Item2;
+                    }
                     if (!_nodeManager.IsMasterReachable().Result)
                     {
                         throw new OperationCanceledException("Master is not reachable");

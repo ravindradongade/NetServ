@@ -44,6 +44,7 @@ namespace NetServNodeEntity
 
         static StaticProperties()
         {
+            TaskMessages = new List<TaskMessage>();
             HostedNodes = new ConcurrentDictionary<string, NodeInfo>();
             NodeHealthInfoMessagesCollection = new BlockingCollection<string>();
             NodesToBeDeclaredDead = new BlockingCollection<NodeInfo>();

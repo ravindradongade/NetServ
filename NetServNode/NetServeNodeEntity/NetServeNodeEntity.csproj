@@ -50,6 +50,7 @@
     <Compile Include="Exceptions\EndPointNotFoundException.cs" />
     <Compile Include="Master\MasterNodeTrack.cs" />
     <Compile Include="Message\NodeDeclaredDeadMessage.cs" />
+    <Compile Include="Message\NodeInfoFromMaster.cs" />
     <Compile Include="Message\NodeInformationMessage.cs" />
     <Compile Include="NamingServiceConfiguration.cs" />
     <Compile Include="NodeConfiguration.cs" />

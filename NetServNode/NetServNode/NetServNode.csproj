@@ -30,6 +30,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Common.Logging, Version=3.3.1.0, Culture=neutral, PublicKeyToken=af08829b84f0328e, processorArchitecture=MSIL">
+      <HintPath>..\packages\Common.Logging.3.3.1\lib\net40\Common.Logging.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Common.Logging.Core, Version=3.3.1.0, Culture=neutral, PublicKeyToken=af08829b84f0328e, processorArchitecture=MSIL">
+      <HintPath>..\packages\Common.Logging.Core.3.3.1\lib\net40\Common.Logging.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Microsoft.Owin, Version=3.0.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Owin.3.0.1\lib\net45\Microsoft.Owin.dll</HintPath>
       <Private>True</Private>
@@ -72,12 +80,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="HttpUtilities\HttpWrapper.cs" />
     <Compile Include="MasterController\MasterController.cs" />
     <Compile Include="Master\MasterManager.cs" />
     <Compile Include="Master\MasterTaskMessageManager.cs" />
     <Compile Include="NetServManager.cs" />
     <Compile Include="NodeController.cs" />
+    <Compile Include="NodeDataManager.cs" />
     <Compile Include="Node\NodeApiProcessor.cs" />
     <Compile Include="Node\NodeManager.cs" />
     <Compile Include="Node\NodeTaskManager.cs" />
@@ -87,6 +95,14 @@
     <Compile Include="TaskSchedulers\TaskSchedulersHolder.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\HttpWrapper\NetServHttpWrapper.csproj">
+      <Project>{fb768f10-60b3-481b-b0ed-73ae374fa18e}</Project>
+      <Name>NetServHttpWrapper</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\NetServData\NetServData.csproj">
+      <Project>{66605111-4b38-4a33-b20b-60705525a567}</Project>
+      <Name>NetServData</Name>
+    </ProjectReference>
     <ProjectReference Include="..\NetServeNodeEntity\NetServeNodeEntity.csproj">
       <Project>{3cc70d2e-0ca1-44c0-bef6-492bc5799786}</Project>
       <Name>NetServeNodeEntity</Name>

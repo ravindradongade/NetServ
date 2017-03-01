@@ -11,7 +11,7 @@ namespace NetServNodeEntity
     {
         public NodeConfiguration(string nodeName, string nodeAddress, int nodePort, bool isMaster,
             StorageType storageType, string connectionString, int maxThreads,int maxCpuUsage, bool nameServiceEnabled,
-            NamingServiceConfiguration namingService, string[] actors, string masterNodeAddress,int masterPort)
+            NamingServiceConfiguration namingService, string[] actors)
         {
             NodeName = nodeName;
             NodeId = Guid.NewGuid().ToString();
@@ -25,8 +25,7 @@ namespace NetServNodeEntity
             NamingServiceEnable = nameServiceEnabled;
             NamingService = namingService;
             Actors = actors;
-            MasterNodeAddress = masterNodeAddress;
-            MasterPort = masterPort;
+            
 
         }
         public string NodeId { get; private set; }

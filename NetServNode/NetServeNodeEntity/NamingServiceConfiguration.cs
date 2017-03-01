@@ -10,13 +10,11 @@ namespace NetServNodeEntity
     {
         public string Address { get; set; }
         public int Port { get; set; }
-        public IPAddress IpAddress
+        public string Uri
         {
             get
             {
-                IPAddress ipAddress = null;
-                IPAddress.TryParse(Address, out ipAddress);
-                return ipAddress;
+                return "http://" + Address + ":" + Port;
             }
         }
     }

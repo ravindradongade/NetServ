@@ -11,28 +11,28 @@ namespace NetServNode.Master
     using System.Collections.Concurrent;
     using System.Threading;
     using System.Timers;
-
     using NetServeNodeEntity.Message;
-
-    using NetServNode.HttpUtilities;
-
     using Timer = System.Timers.Timer;
     using TaskSchedulers;
     using NetServEntity;
+    using Common.Logging;
+    using NetServData;
+    using NetServHttpWrapper;
 
     public class MasterManager
     {
-        private const int NODE_HEALTH_WAITING_PERIOD_IN_SEC = 25;
+        private readonly ILog log = LogManager.GetLogger(typeof(MasterManager));
+        private const int NODE_HEALTH_WAITING_PERIOD_IN_SEC = 50;
         private static object _lockableObjectForTimer = new object();
         private Timer _timer;
         private bool NODE_HEALTH_PROCESS_STARTED;
         private const string QUERY_MESSAGE = "QUERY";
         private const int RETRY_COUNT = 3;
-
-
-        private const string NODE_HEALTH_CHECK_ENDPOINT = "Node/GetNodeHealthInfoForMaster";
-
-        private const string NODE_DECLAREDDEAD_ENDPOINT = "Node/DeclareDead";
+        private IDataManager _dataManager;
+        private const string NODE_HEALTH_CHECK_ENDPOINT = "node/GetNodeHealthInfoForMaster";
+        private const string NODE_DECLAREDDEAD_ENDPOINT = "node/DeclareDead";
+        private const string BROADCAST_NODE_TO_ALL_NODES = "node/IamNode";
+        private const string REGISTER_MASTER_TO_NS = "/ns/RegisterMaster";
         private readonly HttpWrapper _httpWrapper;
 
         private BlockingCollection<NodeInfo> _nodesWithRetry1;
@@ -47,25 +47,46 @@ namespace NetServNode.Master
         }
         private void _Intiallize()
         {
+            log.Debug("Master Manager Intiallize");
             this._nodesWithRetry1 = new BlockingCollection<NodeInfo>();
             this._nodesWithRetry2 = new BlockingCollection<NodeInfo>();
             this._nodesWithRetry3 = new BlockingCollection<NodeInfo>();
         }
-        
+
         public void StartMasterManager()
         {
-            //Start check node status timer
-            this._timer = new Timer(NODE_HEALTH_WAITING_PERIOD_IN_SEC * 1000);
-            this._timer.Elapsed += _CheckNodesStatus;
+            try
+            {
+                //Start check node status timer
+                this._timer = new Timer(NODE_HEALTH_WAITING_PERIOD_IN_SEC * 1000);
+                this._timer.Elapsed += _CheckNodesStatus;
+                this._timer.Start();
+                //start Check helath retry thread for all 3 retry
+                Task.Factory.StartNew(() => this._StartCheckHelathForRetryCount1(), CancellationTokens.MasterNodeHealthMessageProcessor.Token);
+                Task.Factory.StartNew(() => this._StartCheckHelathForRetryCount2(), CancellationTokens.MasterNodeHealthMessageProcessor.Token);
+                Task.Factory.StartNew(() => this._StartCheckHelathForRetryCount3(), CancellationTokens.MasterNodeHealthMessageProcessor.Token);
+                //Start declare noded dead task
+                Task.Factory.StartNew(() => this._DeclareNodeDead(), CancellationTokens.MasterNodeHealthMessageProcessor.Token);
+                _dataManager = DataFactory.GetDataManager(StaticProperties.NodeConfig.StorageType, StaticProperties.NodeConfig.ConnectionString);
+                _RegisterMasterToStorage();
+            }
+            catch (Exception ex)
+            {
 
-            //start Check helath retry thread for all 3 retry
-            Task.Factory.StartNew(() => this._StartCheckHelathForRetryCount1(), CancellationTokens.MasterNodeHealthMessageProcessor.Token);
-            Task.Factory.StartNew(() => this._StartCheckHelathForRetryCount2(), CancellationTokens.MasterNodeHealthMessageProcessor.Token);
-            Task.Factory.StartNew(() => this._StartCheckHelathForRetryCount3(), CancellationTokens.MasterNodeHealthMessageProcessor.Token);
-            //Start declare noded dead task
-            Task.Factory.StartNew(() => this._DeclareNodeDead(), CancellationTokens.MasterNodeHealthMessageProcessor.Token);
+                log.Error(ex);
+            }
+
         }
-        
+
+        private void _RegisterMasterToStorage()
+        {
+            var masterDetails = new MasterDetails() { Address = StaticProperties.NodeConfig.NodeAddress, Id = StaticProperties.NodeConfig.NodeId, Name = StaticProperties.NodeConfig.NodeName, Port = StaticProperties.NodeConfig.NodePort };
+            log.Debug("Registering master to:" + StaticProperties.NodeConfig.StorageType);
+            _dataManager.InsertMaster(masterDetails);
+            log.Debug("Registraion done");
+
+        }
+
         private MessageType _GetMessageType(string type)
         {
             MessageType messageType = (MessageType)int.Parse(type);
@@ -83,6 +104,7 @@ namespace NetServNode.Master
 
             try
             {
+                log.Debug("Got the node info from node :" + nodeInformationMessage.NodeName);
                 var nodeInformation = new NodeInfo()
                 {
                     CpuUsage = nodeInformationMessage.CpuUsage,
@@ -96,6 +118,16 @@ namespace NetServNode.Master
                                                   nodeInformationMessage.NumberOfRunningTask,
                     RegistedActors = nodeInformationMessage.Actros
                 };
+                if (StaticProperties.NextMasterSelectionManager.NodeId != null)
+                {
+                    lock (StaticProperties.NextMasterSelectionManager)
+                    {
+                        if (StaticProperties.NextMasterSelectionManager.NodeId != null)
+                        {
+                            StaticProperties.NextMasterSelectionManager = nodeInformation;
+                        }
+                    }
+                }
                 StaticProperties.HostedNodes.AddOrUpdate(
                     nodeInformation.NodeName,
                     nodeInformation,
@@ -107,11 +139,11 @@ namespace NetServNode.Master
                 }
                 if (taskMessage != null)
                 {
-                    Task.Factory.StartNew(async() =>
+                    Task.Factory.StartNew(async () =>
                     {
                         MasterTaskMessageManager masterTaskManager = new MasterTaskMessageManager();
-                    var result=   await masterTaskManager.SendTaskToNode(taskMessage, nodeInformation.NodeAddress);
-                        if(result)
+                        var result = await masterTaskManager.SendTaskToNode(taskMessage, nodeInformation.NodeAddress);
+                        if (result)
                         {
                             lock (StaticProperties.TaskMessages)
                             {
@@ -119,15 +151,36 @@ namespace NetServNode.Master
                             }
                         }
                     }, CancellationToken.None, TaskCreationOptions.None, TaskSchedulersHolder.SchedulerToSendMissedTaskToNode);
-                   
+
                 }
 
             }
-            catch (Exception)
+            catch (Exception ex)
+            {
+                log.Error(ex);
+            }
+        }
+
+        private void _BroadcastNodesToAllNodes(NodeInfo node)
+        {
+            try
+            {
+                log.Debug("Broadcasting node to all nodes");
+                var nodeInfoFromMaster = new NodeInfoFromMaster() { MasterSelector = StaticProperties.NextMasterSelectionManager, Node = node };
+                var nodes = StaticProperties.HostedNodes.Values;
+                foreach (var nodeInfo in nodes)
+                {
+                    if (node.NodeId != nodeInfo.NodeId)
+                        _httpWrapper.DoHttpPostWithNoReturn<NodeInfoFromMaster>(nodeInfo.NodeAddress, nodeInfoFromMaster);
+                }
+                nodes = null;
+            }
+            catch (Exception ex)
             {
 
-
+                log.Error(ex);
             }
+
         }
 
         /// <summary>
@@ -137,19 +190,28 @@ namespace NetServNode.Master
         /// <param name="e"></param>
         private void _CheckNodesStatus(object sender, ElapsedEventArgs e)
         {
-            //Sustract buffer sconds from utc.now
-            var timeDifference = DateTime.UtcNow.AddSeconds(-NODE_HEALTH_WAITING_PERIOD_IN_SEC);
-            if (StaticProperties.HostedNodes.Count > 0)
+            try
             {
-                //If last checkin croses time difference
-                var nodes =
-                    StaticProperties.HostedNodes.Values.Where(node => node.LastCheckinTime < timeDifference).ToList();
-                for (int nodeIndex = 0; nodeIndex < nodes.Count(); nodeIndex++)
+                log.Debug("Checking Node status");
+                //Sustract buffer sconds from utc.now
+                var currentTime = DateTime.UtcNow;
+                if (StaticProperties.HostedNodes.Count > 0)
                 {
-                    //Assume we need to check node status
-                    this._nodesWithRetry1.Add(nodes[nodeIndex]);
+                    //If last checkin croses time difference
+                    var nodes =
+                        StaticProperties.HostedNodes.Values.Where(node => currentTime.Subtract(node.LastCheckinTime).Seconds > 60).ToList();
+                    for (int nodeIndex = 0; nodeIndex < nodes.Count(); nodeIndex++)
+                    {
+                        //Assume we need to check node status
+                        this._nodesWithRetry1.Add(nodes[nodeIndex]);
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+            }
+
         }
 
         /// <summary>
@@ -163,6 +225,7 @@ namespace NetServNode.Master
                 {
                     if (node != null)
                     {
+                        log.Debug("Checking node health -Retry2 :" + node.NodeName);
                         var nodeInformationMessage =
                               await
                               this._httpWrapper.DoHttpGet<NodeInformationMessage>(
@@ -196,9 +259,9 @@ namespace NetServNode.Master
                 }
 
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                log.Error(ex);
             }
         }
 
@@ -215,6 +278,7 @@ namespace NetServNode.Master
                     Thread.Sleep(TimeSpan.FromSeconds(2));
                     if (node != null)
                     {
+                        log.Debug("Checking node health -Retry3 :" + node.NodeName);
                         var nodeInformationMessage =
                               await
                               this._httpWrapper.DoHttpGet<NodeInformationMessage>(
@@ -263,6 +327,7 @@ namespace NetServNode.Master
         {
             foreach (var node in this._nodesWithRetry1.GetConsumingEnumerable())
             {
+                log.Debug("Checking node health -Retry1 :" + node.NodeName);
                 if (node != null)
                 {
 
@@ -320,6 +385,7 @@ namespace NetServNode.Master
             {
                 try
                 {
+                    log.Debug("Declaring node dead. Node name: " + node.NodeName);
                     //Broadcast dead declared message
                     this._httpWrapper.DoHttpPost(
                                     node.NodeAddress + "/" + NODE_DECLAREDDEAD_ENDPOINT,

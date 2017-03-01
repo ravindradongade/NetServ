@@ -13,7 +13,7 @@ namespace TestApp
         static void Main(string[] args)
         {
             string[] actors = { "a" };
-            NodeConfiguration nodeConfiguration = new NodeConfiguration("tesing", "10.85.130.175", 3344, true, NetServNodeEntity.Enums.StorageType.InMemory, "", 50, 90, false, null,actors,"10.23.45.46",3344);
+            NodeConfiguration nodeConfiguration = new NodeConfiguration("tesing", "10.85.130.175", 3344, true, NetServNodeEntity.Enums.StorageType.SQL, "data source=localhost;initial catalog=NetServ;user id=sa;password=P@ssw0rd;MultipleActiveResultSets=True;App=EntityFramework", 50, 90, false, null,actors);
             NetServManager manager = new NetServManager();
             manager.StartNode(nodeConfiguration);
             Console.ReadLine();

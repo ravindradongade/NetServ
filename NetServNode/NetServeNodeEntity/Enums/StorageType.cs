@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace NetServNodeEntity.Enums
+﻿namespace NetServNodeEntity.Enums
 {
     public enum StorageType
     {
-        InMemory=1,
+        NamingService=1,
         SQL=2,
     }
 }

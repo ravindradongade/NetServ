@@ -9,20 +9,20 @@ namespace NetServNode.Master
     using System.Net.Http.Headers;
 
     using NetServEntity;
-
-    using NetServNode.HttpUtilities;
-
     using NetServNodeEntity;
+    using Common.Logging;
+    using NetServHttpWrapper;
 
     public class MasterTaskMessageManager
     {
+        private readonly ILog log = LogManager.GetLogger(typeof(MasterManager));
         private const string SEND_MESSAGE_TASK_ENDPOINT = "Node/SendTaskMessage";
         private const int RETRY_COUNT = 3;
 
         private HttpWrapper _httpWrapper;
         public MasterTaskMessageManager()
         {
-            this._httpWrapper=new HttpWrapper();
+            this._httpWrapper = new HttpWrapper();
         }
         public async Task<bool> ProcessTaskMessage(TaskMessage message)
         {
@@ -34,20 +34,21 @@ namespace NetServNode.Master
                 if (nodes == null)
                 {
                     count++;
-                    if (count < 2)
+                    if (count < 3)
                     {
                         // Try 3 times
                         goto RETRY;
                     }
                     else
                     {
+                        log.Debug("Could not find any node to process task. Adding message to Queue. Actor Id: " + message.ActorId);
                         lock (StaticProperties.TaskMessages)
                         {
                             StaticProperties.TaskMessages.Add(message);
                         }
                         return true;
                     }
-                   
+
                 }
                 bool success = false;
                 //var nodeWithSameMessageId = nodes.FirstOrDefault(n => n.RegistedActors.Any(ac => ac.ActorName ==message.Actor));
@@ -59,11 +60,13 @@ namespace NetServNode.Master
                 //{
                 foreach (var nodeInfo in nodes)
                 {
+                    log.Debug("Sending Task message to node");
                     var result = await this._httpWrapper.DoHttpPost<string, TaskMessage>(
                            nodeInfo.NodeAddress + "/" + SEND_MESSAGE_TASK_ENDPOINT,
                            message);
                     if (result != null)
                     {
+                        log.Debug("Sent message to node. Node Id: " + nodeInfo.NodeName);
                         success = true;
                         break;
                     }
@@ -72,6 +75,7 @@ namespace NetServNode.Master
                 //}
                 if (!success)
                 {
+                    log.Debug("Could send message to any node. Adding message to Queue. Actor Id: " + message.ActorId);
                     lock (StaticProperties.TaskMessages)
                     {
                         StaticProperties.TaskMessages.Add(message);
@@ -79,19 +83,19 @@ namespace NetServNode.Master
                 }
                 return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                log.Error(ex);
                 return false;
             }
-            
+
 
         }
         public async Task<bool> SendTaskToNode(TaskMessage taskMessage, string nodeAddress)
         {
             return await _SendTaskToNode(taskMessage, nodeAddress);
         }
-        private async Task<bool> _SendTaskToNode(TaskMessage taskMessage,string nodeAddress)
+        private async Task<bool> _SendTaskToNode(TaskMessage taskMessage, string nodeAddress)
         {
             var result = await this._httpWrapper.DoHttpPost<string, TaskMessage>(
                                 nodeAddress + "/" + SEND_MESSAGE_TASK_ENDPOINT,
@@ -106,7 +110,7 @@ namespace NetServNode.Master
                 int count = 0;
                 //Get actor. Try 3 times just to get latest actors
                 RETRY:
-                var nodes = StaticProperties.HostedNodes.Where(x => x.Value.RegistedActors.Any(an=>an.ActorName==taskMessage.Actor));
+                var nodes = StaticProperties.HostedNodes.Where(x => x.Value.RegistedActors.Any(an => an.ActorName == taskMessage.Actor));
                 count++;
                 if (count < 2) goto RETRY;
                 else if (nodes.Count() != 0)
@@ -120,9 +124,9 @@ namespace NetServNode.Master
                 }
                 return null;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                log.Error(ex);
                 return null;
             }
 

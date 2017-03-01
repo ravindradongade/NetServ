@@ -1,14 +1,12 @@
-﻿using NetServNodeEntity;
+﻿using Common.Logging;
+using NetServNodeEntity;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NetServNode.Node
 {
     public class NodeApiProcessor
     {
+        private readonly ILog log = LogManager.GetLogger(typeof(NodeApiProcessor));
         public void RegisterNewMaster(NodeInfo nodeInfo)
         {
             try
@@ -16,10 +14,9 @@ namespace NetServNode.Node
                 StaticProperties.NodeConfig.MasterNodeAddress = nodeInfo.NodeAddress;
                 NodeManager.SendNodeInfoToMasterTimer.Start();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
-                throw;
+                log.Error(ex);
             }
 
         }
@@ -27,14 +24,15 @@ namespace NetServNode.Node
         {
             try
             {
-                var nodeInfo = new NodeInfo() { NodeAddress = StaticProperties.NodeConfig.NodeAddress+":"+StaticProperties.NodeConfig.NodePort, CpuUsage = NodeManager.CpuCounter.NextValue(), NumberOfActorsRunning = StaticProperties.RunningActors.Count, NodeId = StaticProperties.NodeConfig.NodeId };
+                var nodeInfo = new NodeInfo() { NodeAddress = StaticProperties.NodeConfig.NodeAddress + ":" + StaticProperties.NodeConfig.NodePort, CpuUsage = NodeManager.CpuCounter.NextValue(), NumberOfActorsRunning = StaticProperties.RunningActors.Count, NodeId = StaticProperties.NodeConfig.NodeId };
                 return nodeInfo;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
+                log.Error(ex);
                 return null;
             }
-           
+
         }
 
         public void RegisterNode(NodeInfo nodeInfo)
@@ -43,10 +41,9 @@ namespace NetServNode.Node
             {
                 StaticProperties.HostedNodes.AddOrUpdate(nodeInfo.NodeId, nodeInfo, (key, value) => nodeInfo);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
-                throw;
+                log.Error(ex);
             }
         }
     }
